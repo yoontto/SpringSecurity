@@ -24,8 +24,8 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int seq;
     private String id;
-    private String email;
     private String pwd;
+    private String email;
     private String social_type;
     private String nickname;
     private String phone;

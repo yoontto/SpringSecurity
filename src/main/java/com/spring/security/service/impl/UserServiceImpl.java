@@ -9,9 +9,12 @@ import com.spring.security.repository.UserRepository;
 import com.spring.security.response.BaseResponse;
 import com.spring.security.service.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.HashSet;
 import java.util.List;
@@ -22,18 +25,18 @@ import java.util.Set;
 public class UserServiceImpl implements UserService {
 
     private final RoleRepository roleRepository;
-
     private final UserRepository userRepository;
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
 
     @Override
-    public BaseResponse registerAccount(UserDTO userDTO) {
+    public BaseResponse registerAccount(@RequestBody UserDTO userDTO) {
         BaseResponse response = new BaseResponse();
 
         //validate data from client
         validateAccount(userDTO);
 
-        User user = inserUser(userDTO);
-
+        User user = insertUser(userDTO);
 
         try {
             userRepository.save(user);
@@ -44,15 +47,17 @@ public class UserServiceImpl implements UserService {
             response.setMessage("Service Unavailable!");
         }
 
-
         return response;
     }
 
 
-    private User inserUser(UserDTO userDTO) {
+    private User insertUser(UserDTO userDTO) {
         User user = new User();
-        user.setId(user.getId());
-        user.setPwd(user.getPwd());
+        user.setId(userDTO.getId());
+        user.setPwd(passwordEncoder.encode(userDTO.getPwd()));
+        user.setEmail(userDTO.getEmail());
+        user.setNickname(userDTO.getNickname());
+        user.setPhone(userDTO.getPhone());
 
         Set<Role> roles = new HashSet<>();
         roles.add(roleRepository.findByName(userDTO.getRole()));

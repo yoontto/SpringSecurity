@@ -7,6 +7,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -16,8 +17,8 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableWebSecurity
 public class AppConfig {
 
-    @Bean
-    public BCryptPasswordEncoder passwordEncoder() {
+    @Bean("bcryptPasswordEncoder")
+    public static BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
@@ -34,21 +35,29 @@ public class AppConfig {
         AuthenticationManager manager = builder.build();
 
         http
-                .cors(cors -> cors.disable())
-                .csrf(csrf -> csrf.disable())
+                .cors(AbstractHttpConfigurer::disable)
+                .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(request -> request
                         .requestMatchers("/account/**").permitAll()
                         .requestMatchers("/guest/**").permitAll()
                         .requestMatchers("/home/**").authenticated()
                         .requestMatchers("/admin/**").hasAuthority("ADMIN")
                         .requestMatchers("/user/**").hasAuthority("USER")
+                        .requestMatchers("/login/**").permitAll()
                         .anyRequest().authenticated()
-                        );
+                );
 
         http
                 .authenticationManager(manager)
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+
+        http
+                .formLogin(formLogin -> formLogin
+                        .defaultSuccessUrl("/login/success", true)
+                        .usernameParameter("id")
+                        .passwordParameter("pwd"))
+                ;
 
         return http.getOrBuild();
 
